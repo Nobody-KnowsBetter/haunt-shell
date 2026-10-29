@@ -191,6 +191,8 @@ The denominator collapsed into the void (0), ripping a hole through the CPU ALU 
 
 HauntShell is 100% open-source under the permissive MIT License:
 
+{% github Nobody-KnowsBetter/haunt-shell %}
+
 **GitHub:** [https://github.com/Nobody-KnowsBetter/haunt-shell](https://github.com/Nobody-KnowsBetter/haunt-shell)
 
 ### Quick Start (1-Minute Installation)
