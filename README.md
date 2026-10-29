@@ -1,6 +1,7 @@
 # HauntShell 👻 — The Ghost in the Machine
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/Nobody-KnowsBetter/haunt-shell/actions/workflows/ci.yml/badge.svg)](https://github.com/Nobody-KnowsBetter/haunt-shell/actions)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
 [![Hacktoberfest 2026](https://img.shields.io/badge/Hacktoberfest-2026%20Week%204-orange.svg)](https://dev.to/challenges/hacktoberfest-week4-2026-10-26)
 [![Model: Gemma 3](https://img.shields.io/badge/Model-Gemma%203%20%7C%20Ollama-purple.svg)](https://ollama.com/library/gemma3)
@@ -92,15 +93,19 @@ The spirits mock your hubris. To appease the void, cleanse your syntax and offer
 
 ---
 
-### 2. The Offline Digital Séance (`haunt seance`)
+### 2. The Offline Digital Séance (`haunt seance` & `haunt chamber`)
 Sit at the terminal séance circle. Five candles flicker as you channel spirits from across the silicon veil:
 
 ```bash
 # View all summonable entities
 haunt spirits
 
-# Interview Clippy the Undead Revenant
+# Single query mode with Clippy
 haunt seance clippy --query "Why won't my code compile?"
+
+# Multi-turn Interactive Séance Chamber (candles burn down as turns advance!)
+haunt chamber clippy
+haunt seance flash -i
 
 # Mourn the golden age with Adobe Flash
 haunt seance flash --query "Do you miss Newgrounds?"
@@ -130,11 +135,17 @@ Allow me to format your impending doom as an unnumbered bullet list:
 ---
 
 ### 3. Día de los Muertos Altar & Calaveritas (`haunt ofrenda`)
-Celebrate the pioneers of computation in the Mexican tradition of *Día de los Muertos*:
+Celebrate the pioneers of computation and preserve private family memories in the Mexican tradition of *Día de los Muertos*:
 
 ```bash
 # View the Grand Altar of Digital Ancestors
 haunt ofrenda
+
+# Add a private remembrance for a family member or mentor (100% offline & local)
+haunt ofrenda --add
+
+# View your private loved ones altar
+haunt ofrenda --custom
 
 # Place offerings and recite a Calaverita Literaria for Ada Lovelace
 haunt ofrenda ada
@@ -252,22 +263,22 @@ pytest -v --cov=hauntshell
 ```
 
 ```
-====================== 35 passed, 0 failed in 3.63s =======================
+====================== 39 passed, 0 failed in 3.59s =======================
 ---------- coverage: platform darwin, python 3.14.2 ----------
 Name                          Stmts   Miss  Cover
 -------------------------------------------------
 hauntshell/__init__.py            3      0   100%
 hauntshell/autopsy.py            39      2    95%
-hauntshell/cli.py               170     11    94%
+hauntshell/cli.py               234     24    90%
 hauntshell/config.py             22      4    82%
 hauntshell/engine.py             98     39    60%
 hauntshell/fallback_lore.py      32      3    91%
-hauntshell/ofrenda.py            20      0   100%
+hauntshell/ofrenda.py            59      4    93%
 hauntshell/ollama_client.py      62     10    84%
 hauntshell/spirits.py            20      0   100%
-hauntshell/ui.py                 46      9    80%
+hauntshell/ui.py                 58     11    81%
 -------------------------------------------------
-TOTAL                           512     78    85%
+TOTAL                           627     97    85%
 ```
 
 ---
@@ -286,3 +297,4 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 ---
 
 *Created with 🕯️ and 🌼 for the Hacktoberfest 2026 Open-Source AI Challenge.*
+
