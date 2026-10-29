@@ -14,7 +14,13 @@ from hauntshell import __version__
 from hauntshell.config import HauntConfig, config as global_config
 from hauntshell.engine import HauntEngine
 from hauntshell.spirits import get_spirit, list_spirits
-from hauntshell.ofrenda import get_pioneer, list_pioneers
+from hauntshell.ofrenda import (
+    get_pioneer,
+    list_pioneers,
+    Remembrance,
+    load_custom_remembrances,
+    save_custom_remembrance,
+)
 from hauntshell.autopsy import prepare_autopsy_subject
 from hauntshell.ui import (
     console,
@@ -187,11 +193,71 @@ def chamber_command(
 @app.command("ofrenda")
 def ofrenda_command(
     pioneer_name: Optional[str] = typer.Argument(None, help="Pioneer to honor (ada, turing, dennis, hopper, hamilton)"),
+    add: bool = typer.Option(False, "--add", "-a", help="Interactively add a private remembrance for a loved one"),
+    custom: bool = typer.Option(False, "--custom", "-c", help="View personal family and loved one remembrances"),
     offline: bool = typer.Option(False, "--offline", "-o", help="Force local offline lore without Ollama"),
     model: Optional[str] = typer.Option(None, "--model", "-m", help="Override AI model"),
 ) -> None:
     """Visit the Día de los Muertos digital ofrenda and read traditional Calaveritas Literarias."""
     print_banner()
+
+    # 1. Handle adding private remembrance
+    if add:
+        console.print("[bold gold1]🌼 BUILD A PRIVATE DIGITAL OFRENDA (100% OFFLINE) 🌼[/bold gold1]\n")
+        console.print("[italic dim]Your memories, favorite foods, and stories remain 100% on your own device.[/italic dim]\n")
+        name = typer.prompt("Name of your loved one or mentor")
+        relationship = typer.prompt("Relationship (e.g. Grandmother, Father, Mentor, Friend)")
+        lifespan = typer.prompt("Lifespan or dates (e.g. 1935 – 2018)")
+        foods_raw = typer.prompt("Favorite foods, treats, or offerings (comma-separated)")
+        songs_raw = typer.prompt("Favorite songs, hymns, or melodies (comma-separated)")
+        story = typer.prompt("A cherished memory or story to preserve")
+
+        foods = [f.strip() for f in foods_raw.split(",") if f.strip()]
+        songs = [s.strip() for s in songs_raw.split(",") if s.strip()]
+
+        default_calaverita = (
+            f"La Catrina arrived with bright marigolds in hand,\n"
+            f"Seeking dear {name} across the quiet land.\n"
+            f"With songs of {songs[0] if songs else 'the guitar'} and plates of {foods[0] if foods else 'sweet bread'},\n"
+            f"Their laughter still echoes where memories tread.\n"
+            f"Now resting in peace where bright spirits belong,\n"
+            f"Forever remembered in story and song."
+        )
+
+        rem = Remembrance(
+            name=name,
+            relationship=relationship,
+            lifespan=lifespan,
+            foods=foods,
+            songs=songs,
+            story=story,
+            calaverita=default_calaverita,
+        )
+        save_custom_remembrance(rem)
+        console.print(f"\n[bold green]✓ A place of honor for {name} has been lovingly prepared on your altar.[/bold green]")
+        console.print("[dim]View your personal altar anytime with: haunt ofrenda --custom[/dim]\n")
+        return
+
+    # 2. Handle viewing private remembrances
+    if custom:
+        rems = load_custom_remembrances()
+        if not rems:
+            console.print("[dim yellow]No personal remembrances on your altar yet. Add one with: haunt ofrenda --add[/dim yellow]\n")
+            return
+        console.print("[bold gold1]🌼 🕯️  TU ALTAR PRIVADO DE SERES QUERIDOS  🕯️ 🌼[/bold gold1]\n")
+        for r in rems:
+            foods_str = ", ".join(r.foods) if r.foods else "None recorded"
+            songs_str = ", ".join(r.songs) if r.songs else "None recorded"
+            table = Table(show_header=False, box=None)
+            table.add_row("[bold gold1]Loved One:[/bold gold1]", f"[bold white]{r.name}[/bold white] ({r.relationship})")
+            table.add_row("[bold gold1]Years:[/bold gold1]", f"[dim]{r.lifespan}[/dim]")
+            table.add_row("[bold gold1]Offerings / Foods:[/bold gold1]", f"[italic]{foods_str}[/italic]")
+            table.add_row("[bold gold1]Favorite Music:[/bold gold1]", f"[italic]{songs_str}[/italic]")
+            table.add_row("[bold gold1]Story Kept:[/bold gold1]", f"\"{r.story}\"")
+            console.print(Panel(table, border_style="gold1", title=f"[bold gold1]🕯️ {r.name} ({r.lifespan}) 🕯️[/bold gold1]"))
+            if r.calaverita:
+                console.print(f"[italic gold1]{r.calaverita}[/italic gold1]\n")
+        return
 
     if not pioneer_name:
         # Show all pioneers on the altar
@@ -206,8 +272,15 @@ def ofrenda_command(
             table.add_row(p.key, p.name, p.lifespan, p.contribution)
 
         console.print(table)
-        console.print("\n[bold gold1]To place offerings and hear a Calaverita Literaria for a pioneer:[/bold gold1]")
-        console.print("[italic white]haunt ofrenda <key>  (e.g. 'haunt ofrenda ada')[/italic white]\n")
+
+        # Check if user has personal tributes
+        custom_rems = load_custom_remembrances()
+        if custom_rems:
+            console.print(f"\n[italic gold1]🕯️ You have {len(custom_rems)} personal loved ones on your private altar. View with: haunt ofrenda --custom[/italic gold1]")
+
+        console.print("\n[bold gold1]To honor an ancestor or add a loved one:[/bold gold1]")
+        console.print("[italic white]haunt ofrenda <key>     (e.g. 'haunt ofrenda ada')[/italic white]")
+        console.print("[italic white]haunt ofrenda --add     (add a personal loved one)[/italic white]\n")
         return
 
     pioneer = get_pioneer(pioneer_name)

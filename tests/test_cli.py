@@ -49,6 +49,20 @@ def test_cli_ofrenda_invalid():
     assert "not found on the altar" in res.output
 
 
+def test_cli_ofrenda_add_and_custom():
+    user_inputs = "Uncle Carlos\nTio\n1950 – 2020\nPozole, Horchata\nMariachi\nAlways played acoustic guitar at festivals.\n"
+    res_add = runner.invoke(app, ["ofrenda", "--add"], input=user_inputs)
+    assert res_add.exit_code == 0
+    assert "BUILD A PRIVATE DIGITAL OFRENDA" in res_add.output
+    assert "Uncle Carlos" in res_add.output
+
+    res_custom = runner.invoke(app, ["ofrenda", "--custom"])
+    assert res_custom.exit_code == 0
+    assert "TU ALTAR PRIVADO" in res_custom.output
+    assert "Uncle Carlos" in res_custom.output
+    assert "Pozole" in res_custom.output
+
+
 def test_cli_seance_no_args():
     res = runner.invoke(app, ["seance"])
     assert res.exit_code == 0

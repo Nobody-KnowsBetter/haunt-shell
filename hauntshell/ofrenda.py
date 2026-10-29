@@ -2,8 +2,61 @@
 
 from __future__ import annotations
 
+import json
+import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, List, Optional
+
+
+@dataclass
+class Remembrance:
+    """A personal tribute or family remembrance kept private on the local altar."""
+
+    name: str
+    relationship: str
+    lifespan: str
+    foods: List[str]
+    songs: List[str]
+    story: str
+    calaverita: str = ""
+
+
+def get_storage_path() -> Path:
+    """Return local path for private altar storage with sandbox/fallback safety."""
+    custom_dir = os.getenv("HAUNT_STORAGE_DIR")
+    if custom_dir:
+        base_dir = Path(custom_dir)
+    else:
+        try:
+            base_dir = Path.home() / ".hauntshell"
+            base_dir.mkdir(parents=True, exist_ok=True)
+            return base_dir / "custom_ofrendas.json"
+        except (PermissionError, OSError):
+            base_dir = Path("/tmp/.hauntshell")
+    base_dir.mkdir(parents=True, exist_ok=True)
+    return base_dir / "custom_ofrendas.json"
+
+
+def load_custom_remembrances(storage_path: Optional[Path] = None) -> List[Remembrance]:
+    """Load private personal remembrances from local JSON file."""
+    path = storage_path or get_storage_path()
+    if not path.is_file():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return [Remembrance(**item) for item in data]
+    except Exception:
+        return []
+
+
+def save_custom_remembrance(remembrance: Remembrance, storage_path: Optional[Path] = None) -> None:
+    """Save a private personal remembrance to local disk."""
+    path = storage_path or get_storage_path()
+    current = load_custom_remembrances(path)
+    current = [r for r in current if r.name.lower() != remembrance.name.lower()]
+    current.append(remembrance)
+    path.write_text(json.dumps([r.__dict__ for r in current], indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 @dataclass
@@ -147,3 +200,4 @@ def get_pioneer(key: str) -> Optional[Pioneer]:
 def list_pioneers() -> List[Pioneer]:
     """Return all pioneers in the ofrenda registry."""
     return list(PIONEERS.values())
+
