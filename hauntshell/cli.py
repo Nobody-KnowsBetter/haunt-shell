@@ -26,6 +26,7 @@ from hauntshell.ui import (
     print_whisper,
     print_eerie_box,
     CANDLES,
+    get_candle_display,
 )
 
 app = typer.Typer(
@@ -104,6 +105,7 @@ def run_command_alias(
 def seance_command(
     spirit_name: Optional[str] = typer.Argument(None, help="Spirit to summon (clippy, flash, cobol, netscape, ada, dennis, turing)"),
     query: Optional[str] = typer.Option(None, "--query", "-q", help="Inquiry for the spirit across the veil"),
+    interactive: bool = typer.Option(False, "--interactive", "-i", help="Enter multi-turn interactive séance chamber"),
     offline: bool = typer.Option(False, "--offline", "-o", help="Force local offline lore without Ollama"),
     model: Optional[str] = typer.Option(None, "--model", "-m", help="Override AI model"),
 ) -> None:
@@ -125,13 +127,42 @@ def seance_command(
     print_seance_header(spirit.name, spirit.era)
     console.print(f"[italic cyan]Epitaph: \"{spirit.epitaph}\"[/italic cyan]\n")
 
-    if not query:
-        query = typer.prompt("🔮 Inquire of the spirit")
+    engine = get_configured_engine(offline=offline, model=model)
 
+    # Multi-turn interactive mode
+    if interactive or not query:
+        console.print("[dim gold1]* Type 'farewell', 'exit', or 'quit' to close the séance circle *[/dim gold1]\n")
+        max_turns = 5
+        turn = 0
+
+        while turn < max_turns:
+            candle_status = get_candle_display(turn, max_turns)
+            console.print(f"[bold gold1]Séance Candles:[/bold gold1] {candle_status}")
+            user_input = typer.prompt("🔮 Inquire of the spirit")
+
+            if user_input.lower().strip() in ("exit", "quit", "farewell", "goodbye", "bye", "adios"):
+                console.print(f"\n[italic purple]* You bid farewell. {spirit.name} dissolves into the ethereal mist. *[/italic purple]\n")
+                return
+
+            console.print(f"\n[bold white]Mortal Inquiry:[/bold white] [italic]\"{user_input}\"[/italic]\n")
+            console.print(f"[dim purple]* Chanting hex incantations... {spirit.avatar} responds *[/dim purple]\n")
+
+            async def _run_turn(q=user_input):
+                tokens = engine.stream_seance_dialogue(spirit, q)
+                async for token in tokens:
+                    sys.stdout.write(token)
+                    sys.stdout.flush()
+                sys.stdout.write("\n\n")
+
+            asyncio.run(_run_turn())
+            turn += 1
+
+        console.print("[italic red]💨 The last candle has burned out. The veil between worlds seals shut.[/italic red]\n")
+        return
+
+    # Single-query mode
     console.print(f"\n[bold white]Mortal Inquiry:[/bold white] [italic]\"{query}\"[/italic]\n")
     console.print(f"[dim purple]* Chanting hex incantations... {spirit.avatar} materializes *[/dim purple]\n")
-
-    engine = get_configured_engine(offline=offline, model=model)
 
     async def _run():
         tokens = engine.stream_seance_dialogue(spirit, query)
@@ -141,6 +172,16 @@ def seance_command(
         sys.stdout.write("\n\n")
 
     asyncio.run(_run())
+
+
+@app.command("chamber")
+def chamber_command(
+    spirit_name: Optional[str] = typer.Argument(None, help="Spirit to summon in the interactive chamber"),
+    offline: bool = typer.Option(False, "--offline", "-o", help="Force local offline lore"),
+    model: Optional[str] = typer.Option(None, "--model", "-m", help="Override AI model"),
+) -> None:
+    """Enter the interactive multi-turn séance chamber with burning candle physics."""
+    seance_command(spirit_name=spirit_name, query=None, interactive=True, offline=offline, model=model)
 
 
 @app.command("ofrenda")

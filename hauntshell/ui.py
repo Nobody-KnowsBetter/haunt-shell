@@ -57,6 +57,22 @@ TOMBSTONE_ART = r"""[bold dim white]
 CANDLES = "🕯️  🕯️  🕯️  🕯️  🕯️"
 
 
+def get_candle_display(turn: int, max_turns: int = 5) -> str:
+    """Return candle status indicating flame consumption over séance turns."""
+    remaining = max(0, max_turns - turn)
+    if remaining == 0:
+        return "💨  💨  💨  💨  💨  [italic red]*The candles are extinguished. The veil closes.*[/italic red]"
+    icons = []
+    for i in range(max_turns):
+        if i < remaining - 1:
+            icons.append("🕯️")
+        elif i == remaining - 1:
+            icons.append("🔥")
+        else:
+            icons.append("💨")
+    return "  ".join(icons)
+
+
 def print_banner() -> None:
     """Print main HauntShell banner."""
     console.print(GHOST_BANNER)

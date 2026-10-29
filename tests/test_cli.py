@@ -63,6 +63,21 @@ def test_cli_seance_with_spirit():
     assert "paperclip" in res.output.lower()
 
 
+def test_cli_seance_interactive_farewell():
+    # User immediately enters 'farewell' to close circle
+    res = runner.invoke(app, ["seance", "clippy", "-i", "--offline"], input="farewell\n")
+    assert res.exit_code == 0
+    assert "Séance Candles:" in res.output
+    assert "dissolves into the ethereal mist" in res.output
+
+
+def test_cli_chamber_command():
+    res = runner.invoke(app, ["chamber", "clippy", "--offline"], input="quit\n")
+    assert res.exit_code == 0
+    assert "THE SÉANCE CIRCLE" in res.output
+    assert "dissolves into the ethereal mist" in res.output
+
+
 def test_cli_seance_invalid_spirit():
     res = runner.invoke(app, ["seance", "invalid_ghost"])
     assert res.exit_code == 1
